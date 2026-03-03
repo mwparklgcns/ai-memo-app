@@ -7,6 +7,7 @@ export interface Memo {
   createdAt: string
   updatedAt: string
   summary?: string // AI 요약 결과
+  profile: string; // 프로필 이름
 }
 
 export interface MemoFormData {
@@ -14,6 +15,7 @@ export interface MemoFormData {
   content: string
   category: string
   tags: string[]
+  profile: string;
 }
 
 export type MemoCategory = 'personal' | 'work' | 'study' | 'idea' | 'other'

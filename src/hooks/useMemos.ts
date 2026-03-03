@@ -4,114 +4,87 @@ import { useState, useEffect, useCallback, useMemo } from 'react'
 import { Memo, MemoFormData } from '@/types/memo'
 import * as memoActions from '@/app/actions/memos'
 
-export const useMemos = () => {
+export const useMemos = (profile: string | null) => {
   const [memos, setMemos] = useState<Memo[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('all')
 
-  // 메모 로드 (Supabase에서)
   const loadMemos = useCallback(async () => {
+    if (!profile) {
+      setMemos([]);
+      setLoading(false);
+      return;
+    }
     setLoading(true)
     try {
-      const loadedMemos = await memoActions.getMemos()
+      const loadedMemos = await memoActions.getMemos(profile)
       setMemos(loadedMemos)
     } catch (error) {
       console.error('Failed to load memos:', error)
+      setMemos([]); // Clear memos on error
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [profile])
 
-  // 초기 로드
   useEffect(() => {
     loadMemos()
   }, [loadMemos])
 
-  // 메모 생성
-  const createMemo = useCallback(async (formData: MemoFormData): Promise<Memo> => {
-    const newMemo = await memoActions.createMemo(formData)
+  const createMemo = useCallback(async (formData: Omit<MemoFormData, 'profile'>) => {
+    if (!profile) throw new Error('Profile not set');
+    const newMemo = await memoActions.createMemo({ ...formData, profile })
     setMemos(prev => [newMemo, ...prev])
     return newMemo
-  }, [])
+  }, [profile])
 
-  // 메모 업데이트
-  const updateMemo = useCallback(
-    async (id: string, formData: MemoFormData): Promise<void> => {
-      const updatedMemo = await memoActions.updateMemo(id, formData)
-      setMemos(prev => prev.map(memo => (memo.id === id ? updatedMemo : memo)))
-    },
-    []
-  )
+  const updateMemo = useCallback(async (id: string, formData: Omit<MemoFormData, 'profile'>) => {
+    if (!profile) throw new Error('Profile not set');
+    const updatedMemo = await memoActions.updateMemo(id, profile, formData)
+    setMemos(prev => prev.map(memo => (memo.id === id ? updatedMemo : memo)))
+  }, [profile])
 
-  // 메모 삭제
-  const deleteMemo = useCallback(async (id: string): Promise<void> => {
-    await memoActions.deleteMemo(id)
+  const deleteMemo = useCallback(async (id: string) => {
+    if (!profile) throw new Error('Profile not set');
+    await memoActions.deleteMemo(id, profile)
     setMemos(prev => prev.filter(memo => memo.id !== id))
-  }, [])
+  }, [profile])
 
-  // 메모 요약 업데이트
-  const updateMemoSummary = useCallback(
-    async (id: string, summary: string): Promise<void> => {
-      const updatedMemo = await memoActions.updateMemoSummary(id, summary)
-      setMemos(prev => prev.map(memo => (memo.id === id ? updatedMemo : memo)))
-    },
-    []
-  )
+  const updateMemoSummary = useCallback(async (id: string, summary: string) => {
+    if (!profile) throw new Error('Profile not set');
+    const updatedMemo = await memoActions.updateMemoSummary(id, profile, summary)
+    setMemos(prev => prev.map(memo => (memo.id === id ? updatedMemo : memo)))
+  }, [profile])
 
-  // 메모 검색
   const searchMemos = useCallback((query: string): void => {
     setSearchQuery(query)
   }, [])
 
-  // 카테고리 필터링
   const filterByCategory = useCallback((category: string): void => {
     setSelectedCategory(category)
   }, [])
 
-  // 특정 메모 가져오기
-  const getMemoById = useCallback(
-    (id: string): Memo | undefined => {
-      return memos.find(memo => memo.id === id)
-    },
-    [memos]
-  )
-
-  // 필터링된 메모 목록
   const filteredMemos = useMemo(() => {
-    let filtered = memos
+    let filtered = memos;
 
-    // 카테고리 필터링
     if (selectedCategory !== 'all') {
       filtered = filtered.filter(memo => memo.category === selectedCategory)
     }
 
-    // 검색 필터링
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase()
       filtered = filtered.filter(
         memo =>
           memo.title.toLowerCase().includes(query) ||
           memo.content.toLowerCase().includes(query) ||
-          memo.tags.some(tag => tag.toLowerCase().includes(query))
+          (memo.tags && memo.tags.some(tag => tag.toLowerCase().includes(query)))
       )
     }
 
     return filtered
   }, [memos, selectedCategory, searchQuery])
 
-  // 모든 메모 삭제
-  const clearAllMemos = useCallback(async (): Promise<void> => {
-    // 모든 메모를 순차적으로 삭제
-    for (const memo of memos) {
-      await memoActions.deleteMemo(memo.id)
-    }
-    setMemos([])
-    setSearchQuery('')
-    setSelectedCategory('all')
-  }, [memos])
-
-  // 통계 정보
   const stats = useMemo(() => {
     const totalMemos = memos.length
     const categoryCounts = memos.reduce(
@@ -130,27 +103,16 @@ export const useMemos = () => {
   }, [memos, filteredMemos])
 
   return {
-    // 상태
     memos: filteredMemos,
-    allMemos: memos,
     loading,
     searchQuery,
     selectedCategory,
     stats,
-
-    // 메모 CRUD
     createMemo,
     updateMemo,
     deleteMemo,
-    getMemoById,
-    updateMemoSummary,
-
-    // 필터링 & 검색
     searchMemos,
     filterByCategory,
-
-    // 유틸리티
-    clearAllMemos,
-    refreshMemos: loadMemos,
+    updateMemoSummary,
   }
 }

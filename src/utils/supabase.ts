@@ -3,14 +3,15 @@ import { Memo } from '@/types/memo'
 
 // Database row type (snake_case)
 export interface MemoRow {
-  id: string
-  title: string
-  content: string
-  category: string
-  tags: string[]
-  summary: string | null
-  created_at: string
-  updated_at: string
+  id: string;
+  title: string;
+  content: string;
+  category: string;
+  tags: string[];
+  summary: string | null;
+  created_at: string;
+  updated_at: string;
+  profile: string; // 프로필 컬럼 추가
 }
 
 // Supabase 클라이언트 생성
@@ -30,12 +31,13 @@ export function rowToMemo(row: MemoRow): Memo {
     summary: row.summary ?? undefined,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
+    profile: row.profile, // profile 필드 매핑
   }
 }
 
 // Memo -> DB row 변환 (camelCase -> snake_case)
 export function memoToRow(
-  memo: Partial<Memo>
+  memo: Partial<Omit<Memo, 'id' | 'createdAt' | 'updatedAt'>>
 ): Partial<Omit<MemoRow, 'id' | 'created_at' | 'updated_at'>> {
   const row: Partial<Omit<MemoRow, 'id' | 'created_at' | 'updated_at'>> = {}
 
@@ -44,6 +46,7 @@ export function memoToRow(
   if (memo.category !== undefined) row.category = memo.category
   if (memo.tags !== undefined) row.tags = memo.tags
   if (memo.summary !== undefined) row.summary = memo.summary
+  if (memo.profile !== undefined) row.profile = memo.profile // profile 필드 매핑
 
   return row
 }

@@ -12,7 +12,7 @@ import MarkdownEditor from '@/components/MarkdownEditor'
 interface MemoFormProps {
   isOpen: boolean
   onClose: () => void
-  onSubmit: (data: MemoFormData) => void
+  onSubmit: (data: Omit<MemoFormData, 'profile'>) => void
   editingMemo?: Memo | null
 }
 
@@ -22,60 +22,48 @@ export default function MemoForm({
   onSubmit,
   editingMemo,
 }: MemoFormProps) {
-  const [formData, setFormData] = useState<MemoFormData>({
-    title: '',
-    content: '',
-    category: 'personal',
-    tags: [],
-  })
+  const [title, setTitle] = useState('')
+  const [content, setContent] = useState('')
+  const [category, setCategory] = useState('personal')
+  const [tags, setTags] = useState<string[]>([])
   const [tagInput, setTagInput] = useState('')
 
   // 편집 모드일 때 폼 데이터 설정
   useEffect(() => {
-    if (editingMemo) {
-      setFormData({
-        title: editingMemo.title,
-        content: editingMemo.content,
-        category: editingMemo.category,
-        tags: editingMemo.tags,
-      })
+    if (editingMemo && isOpen) {
+      setTitle(editingMemo.title)
+      setContent(editingMemo.content)
+      setCategory(editingMemo.category)
+      setTags(editingMemo.tags)
     } else {
-      setFormData({
-        title: '',
-        content: '',
-        category: 'personal',
-        tags: [],
-      })
+      setTitle('')
+      setContent('')
+      setCategory('personal')
+      setTags([])
     }
     setTagInput('')
   }, [editingMemo, isOpen])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (!formData.title.trim() || !formData.content.trim()) {
+    if (!title.trim() || !content.trim()) {
       alert('제목과 내용을 모두 입력해주세요.')
       return
     }
-    onSubmit(formData)
+    onSubmit({ title, content, category, tags })
     onClose()
   }
 
   const handleAddTag = () => {
     const tag = tagInput.trim()
-    if (tag && !formData.tags.includes(tag)) {
-      setFormData(prev => ({
-        ...prev,
-        tags: [...prev.tags, tag],
-      }))
+    if (tag && !tags.includes(tag)) {
+      setTags(prev => [...prev, tag])
       setTagInput('')
     }
   }
 
   const handleRemoveTag = (tagToRemove: string) => {
-    setFormData(prev => ({
-      ...prev,
-      tags: prev.tags.filter(tag => tag !== tagToRemove),
-    }))
+    setTags(prev => prev.filter(tag => tag !== tagToRemove))
   }
 
   const handleTagInputKeyDown = (e: React.KeyboardEvent) => {
@@ -129,14 +117,9 @@ export default function MemoForm({
               <input
                 type="text"
                 id="title"
-                value={formData.title}
-                onChange={e =>
-                  setFormData(prev => ({
-                    ...prev,
-                    title: e.target.value,
-                  }))
-                }
-                className="placeholder-gray-400 text-gray-400 w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                value={title}
+                onChange={e => setTitle(e.target.value)}
+                className="placeholder-gray-400 text-gray-900 w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                 placeholder="메모 제목을 입력하세요"
                 required
               />
@@ -152,18 +135,13 @@ export default function MemoForm({
               </label>
               <select
                 id="category"
-                value={formData.category}
-                onChange={e =>
-                  setFormData(prev => ({
-                    ...prev,
-                    category: e.target.value,
-                  }))
-                }
-                className="text-gray-400 w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                value={category}
+                onChange={e => setCategory(e.target.value)}
+                className="text-gray-900 w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
               >
-                {DEFAULT_CATEGORIES.map(category => (
-                  <option key={category} value={category}>
-                    {MEMO_CATEGORIES[category]}
+                {DEFAULT_CATEGORIES.map(cat => (
+                  <option key={cat} value={cat}>
+                    {MEMO_CATEGORIES[cat]}
                   </option>
                 ))}
               </select>
@@ -175,13 +153,8 @@ export default function MemoForm({
                 내용 * (마크다운 지원)
               </label>
               <MarkdownEditor
-                value={formData.content}
-                onChange={value =>
-                  setFormData(prev => ({
-                    ...prev,
-                    content: value,
-                  }))
-                }
+                value={content}
+                onChange={setContent}
                 height={300}
               />
             </div>
@@ -210,9 +183,9 @@ export default function MemoForm({
               </div>
 
               {/* 태그 목록 */}
-              {formData.tags.length > 0 && (
+              {tags.length > 0 && (
                 <div className="flex gap-2 flex-wrap">
-                  {formData.tags.map((tag, index) => (
+                  {tags.map((tag, index) => (
                     <span
                       key={index}
                       className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full"

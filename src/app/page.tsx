@@ -6,8 +6,10 @@ import { Memo, MemoFormData } from '@/types/memo'
 import MemoList from '@/components/MemoList'
 import MemoForm from '@/components/MemoForm'
 import MemoDetail from '@/components/MemoDetail'
+import ProfileLogin from '@/components/ProfileLogin'
 
 export default function Home() {
+  const [currentProfile, setCurrentProfile] = useState<string | null>(null);
   const {
     memos,
     loading,
@@ -20,21 +22,26 @@ export default function Home() {
     searchMemos,
     filterByCategory,
     updateMemoSummary,
-  } = useMemos()
+  } = useMemos(currentProfile)
 
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [editingMemo, setEditingMemo] = useState<Memo | null>(null)
   const [viewingMemo, setViewingMemo] = useState<Memo | null>(null)
 
-  const handleCreateMemo = async (formData: MemoFormData) => {
+  const handleLogin = (profile: string) => {
+    setCurrentProfile(profile);
+  };
+
+  const handleCreateMemo = async (formData: Omit<MemoFormData, 'profile'>) => {
     await createMemo(formData)
     setIsFormOpen(false)
   }
 
-  const handleUpdateMemo = async (formData: MemoFormData) => {
+  const handleUpdateMemo = async (formData: Omit<MemoFormData, 'profile'>) => {
     if (editingMemo) {
       await updateMemo(editingMemo.id, formData)
       setEditingMemo(null)
+      setIsFormOpen(false) // Close form on update
     }
   }
 
@@ -79,6 +86,10 @@ export default function Home() {
     }
   }
 
+  if (!currentProfile) {
+    return <ProfileLogin onLogin={handleLogin} />;
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* 헤더 */}
@@ -87,7 +98,7 @@ export default function Home() {
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
               <div className="flex-shrink-0">
-                <h1 className="text-2xl font-bold text-gray-900">📝 메모 앱</h1>
+                <h1 className="text-2xl font-bold text-gray-900">📝 메모 앱 ({currentProfile})</h1>
               </div>
             </div>
 

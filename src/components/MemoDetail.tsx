@@ -90,7 +90,7 @@ export default function MemoDetail({
     } finally {
       setIsSummarizing(false)
     }
-  }, [memo, isSummarizing])
+  }, [memo, isSummarizing, onSummaryUpdate])
 
   if (!isOpen || !memo) return null
 

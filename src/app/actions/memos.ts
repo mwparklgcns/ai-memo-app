@@ -3,11 +3,12 @@
 import { supabase, rowToMemo, memoToRow, MemoRow } from '@/utils/supabase'
 import { Memo, MemoFormData } from '@/types/memo'
 
-// 모든 메모 조회
-export async function getMemos(): Promise<Memo[]> {
+// 특정 프로필의 모든 메모 조회
+export async function getMemos(profile: string): Promise<Memo[]> {
   const { data, error } = await supabase
     .from('memos')
     .select('*')
+    .eq('profile', profile)
     .order('created_at', { ascending: false })
 
   if (error) {
@@ -18,12 +19,13 @@ export async function getMemos(): Promise<Memo[]> {
   return (data as MemoRow[]).map(rowToMemo)
 }
 
-// 단일 메모 조회
-export async function getMemoById(id: string): Promise<Memo | null> {
+// 단일 메모 조회 (프로필 검증 포함)
+export async function getMemoById(id: string, profile: string): Promise<Memo | null> {
   const { data, error } = await supabase
     .from('memos')
     .select('*')
     .eq('id', id)
+    .eq('profile', profile)
     .single()
 
   if (error) {
@@ -41,12 +43,7 @@ export async function getMemoById(id: string): Promise<Memo | null> {
 export async function createMemo(formData: MemoFormData): Promise<Memo> {
   const { data, error } = await supabase
     .from('memos')
-    .insert({
-      title: formData.title,
-      content: formData.content,
-      category: formData.category,
-      tags: formData.tags,
-    })
+    .insert(memoToRow(formData))
     .select()
     .single()
 
@@ -58,10 +55,11 @@ export async function createMemo(formData: MemoFormData): Promise<Memo> {
   return rowToMemo(data as MemoRow)
 }
 
-// 메모 수정
+// 메모 수정 (프로필 검증 포함)
 export async function updateMemo(
   id: string,
-  formData: Partial<MemoFormData>
+  profile: string,
+  formData: Partial<Omit<MemoFormData, 'profile'>>
 ): Promise<Memo> {
   const updateData = memoToRow(formData)
 
@@ -69,6 +67,7 @@ export async function updateMemo(
     .from('memos')
     .update(updateData)
     .eq('id', id)
+    .eq('profile', profile)
     .select()
     .single()
 
@@ -80,15 +79,17 @@ export async function updateMemo(
   return rowToMemo(data as MemoRow)
 }
 
-// 메모 요약 업데이트
+// 메모 요약 업데이트 (프로필 검증 포함)
 export async function updateMemoSummary(
   id: string,
+  profile: string,
   summary: string
 ): Promise<Memo> {
   const { data, error } = await supabase
     .from('memos')
     .update({ summary })
     .eq('id', id)
+    .eq('profile', profile)
     .select()
     .single()
 
@@ -100,44 +101,16 @@ export async function updateMemoSummary(
   return rowToMemo(data as MemoRow)
 }
 
-// 메모 삭제
-export async function deleteMemo(id: string): Promise<void> {
-  const { error } = await supabase.from('memos').delete().eq('id', id)
+// 메모 삭제 (프로필 검증 포함)
+export async function deleteMemo(id: string, profile: string): Promise<void> {
+  const { error } = await supabase
+    .from('memos')
+    .delete()
+    .eq('id', id)
+    .eq('profile', profile)
 
   if (error) {
     console.error('메모 삭제 오류:', error)
     throw new Error('메모 삭제에 실패했습니다.')
   }
-}
-
-// 카테고리별 메모 조회
-export async function getMemosByCategory(category: string): Promise<Memo[]> {
-  const { data, error } = await supabase
-    .from('memos')
-    .select('*')
-    .eq('category', category)
-    .order('created_at', { ascending: false })
-
-  if (error) {
-    console.error('카테고리별 메모 조회 오류:', error)
-    throw new Error('메모를 불러오는데 실패했습니다.')
-  }
-
-  return (data as MemoRow[]).map(rowToMemo)
-}
-
-// 메모 검색
-export async function searchMemos(query: string): Promise<Memo[]> {
-  const { data, error } = await supabase
-    .from('memos')
-    .select('*')
-    .or(`title.ilike.%${query}%,content.ilike.%${query}%`)
-    .order('created_at', { ascending: false })
-
-  if (error) {
-    console.error('메모 검색 오류:', error)
-    throw new Error('메모 검색에 실패했습니다.')
-  }
-
-  return (data as MemoRow[]).map(rowToMemo)
 }
