@@ -7,7 +7,7 @@ import { v4 as uuidv4 } from 'uuid'
 interface MemoFormProps {
   isOpen: boolean
   onClose: () => void
-  onSubmit: (formData: MemoFormData) => void
+  onSubmit: (formData: Omit<MemoFormData, 'profile'>) => void
   editingMemo: Memo | null
 }
 
@@ -24,6 +24,7 @@ export default function MemoForm({
   const [tagInput, setTagInput] = useState('')
   const [todos, setTodos] = useState<TodoItem[]>([])
   const [newTodoText, setNewTodoText] = useState('')
+  const [isCategoryChanged, setIsCategoryChanged] = useState(false);
 
   const formId = useId()
 
@@ -35,58 +36,61 @@ export default function MemoForm({
     setTagInput('')
     setTodos([])
     setNewTodoText('')
+    setIsCategoryChanged(false);
   }, [])
 
   useEffect(() => {
     if (isOpen) {
       if (editingMemo) {
         setTitle(editingMemo.title)
-        setCategory(editingMemo.category)
+        setCategory(editingMemo.category) // Correctly set initial category
         setTags(editingMemo.tags || [])
         if (editingMemo.category === 'todo') {
           setTodos(editingMemo.todos || [])
-          setContent('') // 할 일 메모 편집 시 content는 비워둠
+          setContent('') 
         } else {
           setContent(editingMemo.content)
-          setTodos([]) // 일반 메모 편집 시 todos는 비워둠
+          setTodos([]) 
         }
       } else {
         resetForm()
       }
     } else {
-      // 폼이 닫힐 때 0.3초 후에 상태를 초기화 (애니메이션)
       setTimeout(resetForm, 300);
     }
   }, [isOpen, editingMemo, resetForm])
 
-  // 카테고리 변경 시 데이터 변환 로직
+  // Handle category change
   useEffect(() => {
-    // 폼이 열려있을 때만 동작
-    if (!isOpen) return;
+    if (!isOpen || !isCategoryChanged) {
+      // Only run if form is open and category has actually been changed by user
+      return;
+    }
 
     if (category === 'todo') {
-      // 일반 -> 할 일: content를 todos로 변환
       if (content.trim() !== '') {
         const newTodos = content
           .split('\n')
           .filter(line => line.trim() !== '')
           .map(line => ({ id: uuidv4(), text: line, isDone: false }));
         setTodos(newTodos);
-        setContent(''); // 변환 후 content 초기화
+        setContent('');
       }
     } else {
-      // 할 일 -> 일반: todos를 content로 변환
       if (todos.length > 0) {
         const newContent = todos
           .map(todo => `- [${todo.isDone ? 'x' : ' '}] ${todo.text}`)
           .join('\n');
         setContent(newContent);
-        setTodos([]); // 변환 후 todos 초기화
+        setTodos([]);
       }
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [category, isOpen]); // isOpen을 추가하여 폼이 열릴 때 초기 변환을 막음
+  }, [category, isCategoryChanged, isOpen, content, todos]);
 
+  const handleCategoryChange = (newCategory: string) => {
+    setCategory(newCategory);
+    setIsCategoryChanged(true);
+  }
 
   const handleTagKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && tagInput.trim() !== '') {
@@ -136,7 +140,15 @@ export default function MemoForm({
       alert('제목을 입력해주세요.')
       return
     }
-    onSubmit({ title, content, category, tags, todos })
+    const formData: Omit<MemoFormData, 'profile'> = { title, category, tags };
+    if (category === 'todo') {
+      formData.todos = todos;
+      formData.content = ''; // Ensure content is empty for todo memos
+    } else {
+      formData.content = content;
+      formData.todos = []; // Ensure todos is empty for other memos
+    }
+    onSubmit(formData);
     onClose()
   }
 
@@ -178,7 +190,7 @@ export default function MemoForm({
               <select
                 id={`${formId}-category`}
                 value={category}
-                onChange={e => setCategory(e.target.value)}
+                onChange={e => handleCategoryChange(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
               >
                 {Object.entries(MEMO_CATEGORIES).map(([key, value]) => (
@@ -192,7 +204,7 @@ export default function MemoForm({
               <div className="space-y-3">
                 <label className="block text-sm font-medium text-gray-700">할 일 목록</label>
                 <div className="space-y-2">
-                  {todos.map((todo, index) => (
+                  {todos.map((todo) => (
                     <div key={todo.id} className="flex items-center gap-2 group">
                       <input type="checkbox" checked={todo.isDone} onChange={() => toggleTodo(todo.id)} className="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"/>
                       <input type="text" value={todo.text} onChange={(e) => updateTodoText(todo.id, e.target.value)} className="flex-1 px-2 py-1 border border-transparent rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 bg-gray-50 group-hover:bg-white"/>

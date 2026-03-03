@@ -39,10 +39,11 @@ export const useMemos = (profile: string | null) => {
     return newMemo
   }, [profile])
 
-  const updateMemo = useCallback(async (id: string, formData: Omit<MemoFormData, 'profile'>) => {
+  const updateMemo = useCallback(async (id: string, formData: Partial<MemoFormData>) => {
     if (!profile) throw new Error('Profile not set');
     const updatedMemo = await memoActions.updateMemo(id, profile, formData)
     setMemos(prev => prev.map(memo => (memo.id === id ? updatedMemo : memo)))
+    return updatedMemo // 업데이트된 메모 반환
   }, [profile])
 
   const deleteMemo = useCallback(async (id: string) => {
@@ -55,6 +56,7 @@ export const useMemos = (profile: string | null) => {
     if (!profile) throw new Error('Profile not set');
     const updatedMemo = await memoActions.updateMemoSummary(id, profile, summary)
     setMemos(prev => prev.map(memo => (memo.id === id ? updatedMemo : memo)))
+    return updatedMemo // 업데이트된 메모 반환
   }, [profile])
 
   const searchMemos = useCallback((query: string): void => {
@@ -77,7 +79,7 @@ export const useMemos = (profile: string | null) => {
       filtered = filtered.filter(
         memo =>
           memo.title.toLowerCase().includes(query) ||
-          memo.content.toLowerCase().includes(query) ||
+          (memo.content && memo.content.toLowerCase().includes(query)) ||
           (memo.tags && memo.tags.some(tag => tag.toLowerCase().includes(query)))
       )
     }
@@ -86,18 +88,14 @@ export const useMemos = (profile: string | null) => {
   }, [memos, selectedCategory, searchQuery])
 
   const stats = useMemo(() => {
-    const totalMemos = memos.length
-    const categoryCounts = memos.reduce(
-      (acc, memo) => {
-        acc[memo.category] = (acc[memo.category] || 0) + 1
-        return acc
-      },
-      {} as Record<string, number>
-    )
+    const byCategory: Record<string, number> = { all: memos.length };
+    memos.forEach(memo => {
+      byCategory[memo.category] = (byCategory[memo.category] || 0) + 1;
+    });
 
     return {
-      total: totalMemos,
-      byCategory: categoryCounts,
+      total: memos.length,
+      byCategory,
       filtered: filteredMemos.length,
     }
   }, [memos, filteredMemos])
