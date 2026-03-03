@@ -42,3 +42,4 @@ next-env.d.ts
 
 # workshop materials (instructor only)
 WORKSHOP_SCENARIO.md
+.env*.local

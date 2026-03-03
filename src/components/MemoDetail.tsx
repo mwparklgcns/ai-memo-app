@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
-import { Memo, MEMO_CATEGORIES, TodoItem } from '@/types/memo'
+import { Memo, MEMO_CATEGORIES } from '@/types/memo'
 import MarkdownPreview from '@/components/MarkdownPreview'
 
 interface MemoDetailProps {
@@ -9,7 +9,7 @@ interface MemoDetailProps {
   isOpen: boolean
   onClose: () => void
   onEdit: (memo: Memo) => void
-  onUpdate: (memo: Memo) => void // 할 일 상태 변경을 위함
+  onUpdate: (memo: Memo) => void
   onDelete: (id: string) => void
   onSummaryUpdate?: (id: string, summary: string) => void
 }
@@ -72,8 +72,9 @@ export default function MemoDetail({
       if (!response.ok) throw new Error(data.error || '요약 실패')
       setSummary(data.summary)
       if (onSummaryUpdate) onSummaryUpdate(memo.id, data.summary)
-    } catch (error: any) {
-      setSummaryError(error.message || '요약 중 오류 발생')
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : '요약 중 오류 발생'
+      setSummaryError(message)
     } finally {
       setIsSummarizing(false)
     }

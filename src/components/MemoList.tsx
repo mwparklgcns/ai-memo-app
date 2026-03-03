@@ -1,23 +1,22 @@
 'use client'
 
-import { Memo, MEMO_CATEGORIES, DEFAULT_CATEGORIES } from '@/types/memo'
-import MemoItem from './MemoItem'
+import { Memo, MEMO_CATEGORIES } from '@/types/memo'
 
 interface MemoListProps {
   memos: Memo[]
   loading: boolean
   searchQuery: string
   selectedCategory: string
-  onSearchChange: (query: string) => void
-  onCategoryChange: (category: string) => void
-  onEditMemo: (memo: Memo) => void
-  onDeleteMemo: (id: string) => void
-  onViewMemo: (memo: Memo) => void
   stats: {
     total: number
     filtered: number
     byCategory: Record<string, number>
   }
+  onSearchChange: (query: string) => void
+  onCategoryChange: (category: string) => void
+  onEditMemo: (memo: Memo) => void
+  onDeleteMemo: (id: string) => void
+  onViewMemo: (memo: Memo) => void
 }
 
 export default function MemoList({
@@ -25,139 +24,103 @@ export default function MemoList({
   loading,
   searchQuery,
   selectedCategory,
+  stats,
   onSearchChange,
   onCategoryChange,
   onEditMemo,
   onDeleteMemo,
   onViewMemo,
-  stats,
 }: MemoListProps) {
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-        <span className="ml-3 text-gray-600">메모를 불러오는 중...</span>
-      </div>
-    )
+  const getCategoryColor = (category: string) => {
+    const colors: { [key: string]: string } = {
+      todo: 'border-cyan-500',
+      personal: 'border-blue-500',
+      work: 'border-green-500',
+      study: 'border-purple-500',
+      idea: 'border-yellow-500',
+      other: 'border-gray-500',
+    }
+    return colors[category] || colors.other
   }
 
+  const allCategories = ['all', ...Object.keys(MEMO_CATEGORIES)]
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* 검색 및 필터 */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-        <div className="flex flex-col sm:flex-row gap-4">
-          {/* 검색 */}
-          <div className="flex-1">
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <svg
-                  className="h-5 w-5 text-gray-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                  />
-                </svg>
-              </div>
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={e => onSearchChange(e.target.value)}
-                className="placeholder-gray-400 text-gray-400 block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                placeholder="메모 검색..."
-              />
-            </div>
-          </div>
-
-          {/* 카테고리 필터 */}
-          <div className="sm:w-48">
-            <select
-              value={selectedCategory}
-              onChange={e => onCategoryChange(e.target.value)}
-              className="text-gray-400 block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-            >
-              <option value="all">전체 카테고리</option>
-              {DEFAULT_CATEGORIES.map(category => (
-                <option key={category} value={category}>
-                  {MEMO_CATEGORIES[category]} ({stats.byCategory[category] || 0}
-                  )
-                </option>
-              ))}
-            </select>
-          </div>
+      <div className="p-6 bg-white rounded-lg shadow">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <input
+            type="text"
+            placeholder="검색... (제목, 내용, 태그)"
+            value={searchQuery}
+            onChange={e => onSearchChange(e.target.value)}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+          />
+          <select
+            value={selectedCategory}
+            onChange={e => onCategoryChange(e.target.value)}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+          >
+            {allCategories.map(cat => (
+              <option key={cat} value={cat}>
+                {cat === 'all' ? '전체 카테고리' : MEMO_CATEGORIES[cat as keyof typeof MEMO_CATEGORIES]}
+                ({stats.byCategory[cat] || 0})
+              </option>
+            ))}
+          </select>
         </div>
-
-        {/* 통계 정보 */}
-        <div className="mt-4 flex items-center justify-between text-sm text-gray-600">
-          <div>
-            {searchQuery || selectedCategory !== 'all' ? (
-              <span>
-                {stats.filtered}개 메모 (전체 {stats.total}개 중)
-              </span>
-            ) : (
-              <span>총 {stats.total}개의 메모</span>
-            )}
-          </div>
-
-          {(searchQuery || selectedCategory !== 'all') && (
-            <button
-              onClick={() => {
-                onSearchChange('')
-                onCategoryChange('all')
-              }}
-              className="text-blue-600 hover:text-blue-800 hover:underline"
-            >
-              필터 초기화
-            </button>
-          )}
-        </div>
+        <p className="text-sm text-gray-500 mt-4">
+          총 {stats.total}개의 메모 중 {stats.filtered}개가 표시됩니다.
+        </p>
       </div>
 
       {/* 메모 목록 */}
-      {memos.length === 0 ? (
-        <div className="text-center py-12">
-          <div className="mx-auto w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-            <svg
-              className="w-12 h-12 text-gray-400"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-              />
-            </svg>
-          </div>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">
-            {searchQuery || selectedCategory !== 'all'
-              ? '검색 결과가 없습니다'
-              : '아직 메모가 없습니다'}
-          </h3>
-          <p className="text-gray-600 mb-4">
-            {searchQuery || selectedCategory !== 'all'
-              ? '다른 검색어나 카테고리를 시도해보세요.'
-              : '첫 번째 메모를 작성해보세요!'}
-          </p>
+      {loading ? (
+        <div className="text-center py-10">
+          <p className="text-gray-500">메모를 불러오는 중...</p>
+        </div>
+      ) : memos.length > 0 ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {memos.map(memo => {
+             const allTodosDone = memo.category === 'todo' && memo.todos && memo.todos.every(t => t.isDone);
+             return (
+                <div
+                  key={memo.id}
+                  className={`bg-white rounded-lg shadow-md overflow-hidden transform hover:-translate-y-1 transition-all duration-300 border-l-4 ${getCategoryColor(memo.category)}`}
+                >
+                  <div className="p-5">
+                    <div className="flex justify-between items-start">
+                      <h3 
+                        className={`text-lg font-bold text-gray-800 mb-2 truncate cursor-pointer hover:text-blue-600 transition-colors ${allTodosDone ? 'line-through text-gray-400' : ''}`}
+                        onClick={() => onViewMemo(memo)}
+                        title={memo.title}
+                      >
+                        {memo.title}
+                      </h3>
+                      <span className="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-700">
+                        {MEMO_CATEGORIES[memo.category]}
+                      </span>
+                    </div>
+                    <p className="text-sm text-gray-600 h-12 overflow-hidden mb-3">
+                      {memo.summary || (memo.category === 'todo' ? `${memo.todos?.length || 0}개의 할 일` : memo.content) }
+                    </p>
+                    <div className="flex items-center justify-between text-xs text-gray-500">
+                      <span>{new Date(memo.updatedAt).toLocaleDateString('ko-KR')}</span>
+                      <div className="flex space-x-2">
+                        <button onClick={() => onEditMemo(memo)} className="text-blue-500 hover:text-blue-700">편집</button>
+                        <button onClick={() => onDeleteMemo(memo.id)} className="text-red-500 hover:text-red-700">삭제</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+             );
+          })}
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {memos.map(memo => (
-            <MemoItem
-              key={memo.id}
-              memo={memo}
-              onEdit={onEditMemo}
-              onDelete={onDeleteMemo}
-              onView={onViewMemo}
-            />
-          ))}
+        <div className="text-center py-10 bg-white rounded-lg shadow">
+          <p className="text-gray-500">표시할 메모가 없습니다.</p>
+          <p className="text-sm text-gray-400 mt-2">새 메모를 작성해보세요!</p>
         </div>
       )}
     </div>

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { useMemos } from '@/hooks/useMemos'
 import { Memo, MemoFormData } from '@/types/memo'
 import MemoList from '@/components/MemoList'
@@ -17,7 +17,7 @@ export default function Home() {
     selectedCategory,
     stats,
     createMemo,
-    updateMemo, // MemoDetail에서 사용하기 위해 가져옴
+    updateMemo, 
     deleteMemo,
     searchMemos,
     filterByCategory,
@@ -32,71 +32,67 @@ export default function Home() {
     setCurrentProfile(profile);
   };
 
-  const handleCreateMemo = async (formData: Omit<MemoFormData, 'profile'>) => {
+  const handleCreateMemo = useCallback(async (formData: Omit<MemoFormData, 'profile'>) => {
     await createMemo(formData)
     setIsFormOpen(false)
-  }
+  }, [createMemo]);
 
-  const handleUpdateMemoInForm = async (formData: Omit<MemoFormData, 'profile'>) => {
+  const handleUpdateMemo = useCallback(async (formData: Omit<MemoFormData, 'profile'>) => {
     if (editingMemo) {
-      // 폼을 통해 전체 내용을 수정하는 경우
-      await updateMemo(editingMemo.id, formData)
-      setEditingMemo(null)
-      setIsFormOpen(false)
+      const updatedMemo = await updateMemo(editingMemo.id, formData);
+      setEditingMemo(null);
+      setIsFormOpen(false);
       // 상세 보기가 열려있었다면, 최신 내용으로 업데이트
       if (viewingMemo && viewingMemo.id === editingMemo.id) {
-        // Đây là nơi bạn sẽ cần tải lại dữ liệu hoặc cập nhật cục bộ
-        const reloadedMemos = await useMemos(currentProfile).memos;
-        const updatedViewingMemo = reloadedMemos.find(m => m.id === editingMemo.id);
-        setViewingMemo(updatedViewingMemo || null);
+        setViewingMemo(updatedMemo);
       }
     }
-  }
+  }, [editingMemo, viewingMemo, updateMemo]);
   
-  const handleUpdateMemoState = async (memo: Memo) => {
+  const handleUpdateTodoState = useCallback(async (memo: Memo) => {
     // 상세 보기에서 '할 일' 상태만 변경하는 경우
-    await updateMemo(memo.id, memo as MemoFormData);
+    const updatedMemo = await updateMemo(memo.id, memo);
     // viewingMemo 상태를 직접 업데이트하여 UI에 즉시 반영
+    setViewingMemo(updatedMemo);
+  }, [updateMemo]);
+
+  const openNewMemoForm = useCallback(() => {
+    setEditingMemo(null);
+    setIsFormOpen(true);
+  }, []);
+
+  const openEditMemoForm = useCallback((memo: Memo) => {
+    setViewingMemo(null); // 상세 모달 닫기
+    setEditingMemo(memo);
+    setIsFormOpen(true);
+  }, []);
+
+  const handleCloseForm = useCallback(() => {
+    setIsFormOpen(false);
+    setEditingMemo(null);
+  }, []);
+
+  const handleViewMemo = useCallback((memo: Memo) => {
     setViewingMemo(memo);
-  };
+  }, []);
 
-  const handleEditMemo = (memo: Memo) => {
-    setEditingMemo(memo)
-    setIsFormOpen(true)
-    // 상세 보기 모달이 열려있다면 닫기
-    if (viewingMemo) {
-      setViewingMemo(null);
-    }
-  }
+  const handleCloseDetail = useCallback(() => {
+    setViewingMemo(null);
+  }, []);
 
-  const handleCloseForm = () => {
-    setIsFormOpen(false)
-    setEditingMemo(null)
-  }
-
-  const handleViewMemo = (memo: Memo) => {
-    setViewingMemo(memo)
-  }
-
-  const handleCloseDetail = () => {
-    setViewingMemo(null)
-  }
-
-  const handleDeleteFromDetail = async (id: string) => {
-    await deleteMemo(id)
-    setViewingMemo(null)
-  }
-
-  const handleDeleteMemo = async (id: string) => {
-    await deleteMemo(id)
-  }
-
-  const handleSummaryUpdate = async (id: string, summary: string) => {
-    await updateMemoSummary(id, summary)
+  const handleDeleteMemo = useCallback(async (id: string) => {
+    await deleteMemo(id);
     if (viewingMemo && viewingMemo.id === id) {
-      setViewingMemo({ ...viewingMemo, summary })
+      setViewingMemo(null); // 삭제된 메모가 상세보기에 있었다면 닫기
     }
-  }
+  }, [deleteMemo, viewingMemo]);
+
+  const handleSummaryUpdate = useCallback(async (id: string, summary: string) => {
+    await updateMemoSummary(id, summary);
+    if (viewingMemo && viewingMemo.id === id) {
+      setViewingMemo(prev => prev ? { ...prev, summary } : null);
+    }
+  }, [updateMemoSummary, viewingMemo]);
 
   if (!currentProfile) {
     return <ProfileLogin onLogin={handleLogin} />;
@@ -114,7 +110,7 @@ export default function Home() {
             </div>
             <div className="flex items-center space-x-4">
               <button
-                onClick={() => setIsFormOpen(true)}
+                onClick={openNewMemoForm}
                 className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
               >
                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
@@ -133,7 +129,7 @@ export default function Home() {
           selectedCategory={selectedCategory}
           onSearchChange={searchMemos}
           onCategoryChange={filterByCategory}
-          onEditMemo={handleEditMemo}
+          onEditMemo={openEditMemoForm}
           onDeleteMemo={handleDeleteMemo}
           onViewMemo={handleViewMemo}
           stats={stats}
@@ -144,16 +140,16 @@ export default function Home() {
         memo={viewingMemo}
         isOpen={viewingMemo !== null}
         onClose={handleCloseDetail}
-        onEdit={handleEditMemo} // 편집 버튼 클릭 시 handleEditMemo 호출
-        onUpdate={handleUpdateMemoState} // 할 일 상태 변경 시
-        onDelete={handleDeleteFromDetail}
+        onEdit={openEditMemoForm}
+        onUpdate={handleUpdateTodoState}
+        onDelete={handleDeleteMemo}
         onSummaryUpdate={handleSummaryUpdate}
       />
 
       <MemoForm
         isOpen={isFormOpen}
         onClose={handleCloseForm}
-        onSubmit={editingMemo ? handleUpdateMemoInForm : handleCreateMemo}
+        onSubmit={editingMemo ? handleUpdateMemo : handleCreateMemo}
         editingMemo={editingMemo}
       />
     </div>
