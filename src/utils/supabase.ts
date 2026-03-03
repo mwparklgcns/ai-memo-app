@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
-import { Memo } from '@/types/memo'
+import { Memo, TodoItem } from '@/types/memo'
 
 // Database row type (snake_case)
 export interface MemoRow {
@@ -11,7 +11,7 @@ export interface MemoRow {
   summary: string | null;
   created_at: string;
   updated_at: string;
-  profile: string; // 프로필 컬럼 추가
+  profile: string;
 }
 
 // Supabase 클라이언트 생성
@@ -22,31 +22,51 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
 // DB row -> Memo 변환 (snake_case -> camelCase)
 export function rowToMemo(row: MemoRow): Memo {
-  return {
+  const memo: Memo = {
     id: row.id,
     title: row.title,
     content: row.content,
-    category: row.category,
+    category: row.category as Memo['category'],
     tags: row.tags,
     summary: row.summary ?? undefined,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
-    profile: row.profile, // profile 필드 매핑
+    profile: row.profile,
   }
+
+  // 'todo' 카테고리인 경우 content를 todos로 파싱
+  if (memo.category === 'todo' && memo.content) {
+    try {
+      memo.todos = JSON.parse(memo.content) as TodoItem[];
+      // 파싱에 성공하면 content는 비워두어 혼동을 방지
+      memo.content = ''; 
+    } catch (e) {
+      console.error('Failed to parse todos from content:', e);
+      memo.todos = []; // 파싱 실패 시 빈 배열 할당
+    }
+  }
+
+  return memo;
 }
 
 // Memo -> DB row 변환 (camelCase -> snake_case)
 export function memoToRow(
   memo: Partial<Omit<Memo, 'id' | 'createdAt' | 'updatedAt'>>
 ): Partial<Omit<MemoRow, 'id' | 'created_at' | 'updated_at'>> {
-  const row: Partial<Omit<MemoRow, 'id' | 'created_at' | 'updated_at'>> = {}
+  const row: Partial<Omit<MemoRow, 'id' | 'created_at' | 'updated_at'>> = {};
 
-  if (memo.title !== undefined) row.title = memo.title
-  if (memo.content !== undefined) row.content = memo.content
-  if (memo.category !== undefined) row.category = memo.category
-  if (memo.tags !== undefined) row.tags = memo.tags
-  if (memo.summary !== undefined) row.summary = memo.summary
-  if (memo.profile !== undefined) row.profile = memo.profile // profile 필드 매핑
+  // 'todo' 카테고리인 경우 todos를 content로 변환
+  if (memo.category === 'todo' && memo.todos) {
+    row.content = JSON.stringify(memo.todos);
+  } else if (memo.content !== undefined) {
+    row.content = memo.content;
+  }
 
-  return row
+  if (memo.title !== undefined) row.title = memo.title;
+  if (memo.category !== undefined) row.category = memo.category;
+  if (memo.tags !== undefined) row.tags = memo.tags;
+  if (memo.summary !== undefined) row.summary = memo.summary;
+  if (memo.profile !== undefined) row.profile = memo.profile;
+
+  return row;
 }

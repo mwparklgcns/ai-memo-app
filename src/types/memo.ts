@@ -1,10 +1,9 @@
-
 export const MEMO_CATEGORIES = {
-  todo: '할 일',
   personal: '개인',
   work: '업무',
+  ideas: '아이디어',
+  todo: '할 일',
   study: '학습',
-  idea: '아이디어',
   other: '기타',
 } as const;
 
@@ -18,15 +17,15 @@ export interface TodoItem {
 
 export interface Memo {
   id: string;
-  profile: string;
   title: string;
+  content: string; 
   category: MemoCategory;
   tags: string[];
   createdAt: string;
   updatedAt: string;
+  profile: string;
   summary?: string;
-  content?: string; // 일반 메모용
   todos?: TodoItem[]; // '할 일' 메모용
 }
 
-export type MemoFormData = Omit<Memo, 'id' | 'createdAt' | 'updatedAt' | 'summary'>;
+export type MemoFormData = Partial<Omit<Memo, 'id' | 'createdAt' | 'updatedAt' | 'summary'>>;
