@@ -49,7 +49,7 @@ export default function MemoForm({
           setTodos(editingMemo.todos || [])
           setContent('') 
         } else {
-          setContent(editingMemo.content)
+          setContent(editingMemo.content || '')
           setTodos([]) 
         }
       } else {
