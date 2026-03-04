@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useId } from 'react'
-import { Memo, MemoFormData, MEMO_CATEGORIES, TodoItem } from '@/types/memo'
+import { Memo, MemoFormData, MEMO_CATEGORIES, TodoItem, MemoCategory } from '@/types/memo'
 import { v4 as uuidv4 } from 'uuid'
 
 interface MemoFormProps {
@@ -19,7 +19,7 @@ export default function MemoForm({
 }: MemoFormProps) {
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
-  const [category, setCategory] = useState('personal')
+  const [category, setCategory] = useState<MemoCategory>('personal')
   const [tags, setTags] = useState<string[]>([])
   const [tagInput, setTagInput] = useState('')
   const [todos, setTodos] = useState<TodoItem[]>([])
@@ -88,7 +88,7 @@ export default function MemoForm({
   }, [category, isCategoryChanged, isOpen, content, todos]);
 
   const handleCategoryChange = (newCategory: string) => {
-    setCategory(newCategory);
+    setCategory(newCategory as MemoCategory);
     setIsCategoryChanged(true);
   }
 
