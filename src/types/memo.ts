@@ -1,7 +1,7 @@
 export const MEMO_CATEGORIES = {
   personal: '개인',
   work: '업무',
-  ideas: '아이디어',
+  idea: '아이디어',
   todo: '할 일',
   study: '학습',
   other: '기타',
