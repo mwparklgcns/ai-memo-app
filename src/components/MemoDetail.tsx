@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
-import { Memo, MEMO_CATEGORIES } from '@/types/memo'
+import { Memo, MEMO_CATEGORIES, MEMO_CATEGORY_COLORS } from '@/types/memo'
 import MarkdownPreview from '@/components/MarkdownPreview'
 
 interface MemoDetailProps {
@@ -107,18 +107,6 @@ export default function MemoDetail({
       minute: '2-digit',
     })
 
-  const getCategoryColor = (category: string) => {
-    const colors: { [key: string]: string } = {
-      todo: 'bg-cyan-100 text-cyan-800',
-      personal: 'bg-blue-100 text-blue-800',
-      work: 'bg-green-100 text-green-800',
-      study: 'bg-purple-100 text-purple-800',
-      idea: 'bg-yellow-100 text-yellow-800',
-      other: 'bg-gray-100 text-gray-800',
-    }
-    return colors[category] || colors.other
-  }
-
   const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (e.target === e.currentTarget) onClose()
   }
@@ -144,8 +132,8 @@ export default function MemoDetail({
                 {memo.title}
               </h2>
               <div className="flex items-center gap-3 flex-wrap">
-                <span className={`px-3 py-1 rounded-full text-sm font-medium ${getCategoryColor(memo.category)}`}>
-                  {MEMO_CATEGORIES[memo.category as keyof typeof MEMO_CATEGORIES] || memo.category}
+                <span className={`px-3 py-1 rounded-full text-sm font-medium ${MEMO_CATEGORY_COLORS[memo.category]}`}>
+                  {MEMO_CATEGORIES[memo.category] || memo.category}
                 </span>
                 <span className="text-sm text-gray-500">작성: {formatDate(memo.createdAt)}</span>
                 {memo.createdAt !== memo.updatedAt && <span className="text-sm text-gray-400">수정: {formatDate(memo.updatedAt)}</span>}

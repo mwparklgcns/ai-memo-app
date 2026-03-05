@@ -1,6 +1,6 @@
 'use client'
 
-import { Memo, MEMO_CATEGORIES } from '@/types/memo'
+import { Memo, MEMO_CATEGORIES, MEMO_CATEGORY_COLORS } from '@/types/memo'
 import MarkdownPreview from '@/components/MarkdownPreview'
 
 interface MemoItemProps {
@@ -27,17 +27,6 @@ export default function MemoItem({
     })
   }
 
-  const getCategoryColor = (category: string) => {
-    const colors: Record<string, string> = {
-      personal: 'bg-blue-100 text-blue-800',
-      work: 'bg-green-100 text-green-800',
-      study: 'bg-purple-100 text-purple-800',
-      idea: 'bg-yellow-100 text-yellow-800',
-      todo: 'bg-indigo-100 text-indigo-800',
-    }
-    return colors[category] || 'bg-gray-100 text-gray-800'
-  }
-
   const allTodosDone = memo.category === 'todo' && memo.todos && memo.todos.length > 0 && memo.todos.every(t => t.isDone);
 
   return (
@@ -55,10 +44,9 @@ export default function MemoItem({
             </h3>
             <div className="flex items-center gap-2 flex-wrap">
               <span
-                className={`px-2 py-1 rounded-full text-xs font-medium ${getCategoryColor(memo.category)}`}
+                className={`px-2 py-1 rounded-full text-xs font-medium ${MEMO_CATEGORY_COLORS[memo.category]}`}
               >
-                {MEMO_CATEGORIES[memo.category as keyof typeof MEMO_CATEGORIES] ||
-                  memo.category}
+                {MEMO_CATEGORIES[memo.category] || memo.category}
               </span>
               <span className="text-xs text-gray-500 whitespace-nowrap">
                 {formatDate(memo.updatedAt)}
