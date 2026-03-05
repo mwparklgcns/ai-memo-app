@@ -15,22 +15,6 @@
 | `localStorage.ts` | LocalStorage CRUD 래퍼 |
 | `seedData.ts` | 초기 샘플 데이터 시딩 |
 
-## localStorage.ts 구조
-
-```typescript
-const localStorageUtils = {
-  getMemos(): Memo[]              // 전체 메모 조회
-  saveMemos(memos): void          // 전체 메모 저장
-  addMemo(memo): void             // 메모 추가
-  updateMemo(memo): void          // 메모 수정
-  deleteMemo(id): void            // 메모 삭제
-  searchMemos(query): Memo[]      // 메모 검색
-  getMemosByCategory(cat): Memo[] // 카테고리 필터
-  getMemoById(id): Memo | null    // 단건 조회
-  clearMemos(): void              // 전체 삭제
-}
-```
-
 ## Implementation Patterns
 
 ### SSR 안전한 브라우저 API 접근

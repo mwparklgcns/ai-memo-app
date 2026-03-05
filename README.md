@@ -2,7 +2,7 @@
 
 **핸즈온 실습용 Next.js 메모 애플리케이션**
 
-LocalStorage 기반의 완전한 CRUD 기능을 갖춘 메모 앱으로, MCP 연동 및 GitHub PR 생성 실습의 기반이 되는 프로젝트입니다.
+Supabase 기반의 완전한 CRUD 기능을 갖춘 메모 앱으로, MCP 연동 및 GitHub PR 생성 실습의 기반이 되는 프로젝트입니다.
 
 ## 🚀 주요 기능
 
@@ -11,7 +11,7 @@ LocalStorage 기반의 완전한 CRUD 기능을 갖춘 메모 앱으로, MCP 연
 - 🏷️ 태그 시스템으로 메모 태깅
 - 🔍 제목, 내용, 태그 기반 실시간 검색
 - 📱 반응형 디자인 (모바일, 태블릿, 데스크톱)
-- 💾 LocalStorage 기반 데이터 저장 (오프라인 지원)
+- ☁️ Supabase를 이용한 실시간 데이터 동기화
 - 🎨 모던한 UI/UX with Tailwind CSS
 
 ## 🛠 기술 스택
@@ -19,7 +19,7 @@ LocalStorage 기반의 완전한 CRUD 기능을 갖춘 메모 앱으로, MCP 연
 - **Framework**: Next.js 15.4.4 (App Router)
 - **Language**: TypeScript
 - **Styling**: Tailwind CSS v4
-- **Storage**: LocalStorage
+- **Database**: Supabase
 - **State Management**: React Hooks (useState, useEffect, useMemo)
 - **Package Manager**: npm
 
@@ -49,6 +49,8 @@ http://localhost:3000
 memo-app/
 ├── src/
 │   ├── app/
+│   │   ├── actions/
+│   │   │   └── memos.ts         # Supabase 데이터 액션
 │   │   ├── globals.css          # 글로벌 스타일
 │   │   ├── layout.tsx           # 루트 레이아웃
 │   │   └── page.tsx             # 메인 페이지
@@ -58,11 +60,8 @@ memo-app/
 │   │   └── MemoList.tsx         # 메모 목록 및 필터
 │   ├── hooks/
 │   │   └── useMemos.ts          # 메모 관리 커스텀 훅
-│   ├── types/
-│   │   └── memo.ts              # 메모 타입 정의
-│   └── utils/
-│       ├── localStorage.ts      # LocalStorage 유틸리티
-│       └── seedData.ts          # 샘플 데이터 시딩
+│   └── types/
+│       └── memo.ts              # 메모 타입 정의
 └── README.md                    # 프로젝트 문서
 ```
 
@@ -94,6 +93,7 @@ memo-app/
 ```typescript
 interface Memo {
   id: string // 고유 식별자
+  profile: string // 사용자 프로필
   title: string // 메모 제목
   content: string // 메모 내용
   category: string // 카테고리 (personal, work, study, idea, other)
@@ -105,21 +105,15 @@ interface Memo {
 
 ## 🎯 실습 시나리오
 
-이 프로젝트는 다음 3가지 실습의 기반으로 사용됩니다:
+이 프로젝트는 다음 실습의 기반으로 사용됩니다:
 
-### 실습 1: Supabase MCP 마이그레이션 (45분)
-
-- LocalStorage → Supabase 데이터베이스 전환
-- MCP를 통한 자동 스키마 생성
-- 기존 데이터 무손실 마이그레이션
-
-### 실습 2: 기능 확장 + GitHub PR (60분)
+### 실습 1: 기능 확장 + GitHub PR (60분)
 
 - 메모 즐겨찾기 기능 추가
 - Cursor Custom Modes로 PR 생성
 - 코드 리뷰 및 협업 실습
 
-### 실습 3: Playwright MCP 테스트 (45분)
+### 실습 2: Playwright MCP 테스트 (45분)
 
 - E2E 테스트 작성
 - 브라우저 자동화 및 시각적 테스트
@@ -127,20 +121,11 @@ interface Memo {
 
 자세한 실습 가이드는 강의자료를 참고하세요.
 
-## 🎨 샘플 데이터
-
-앱 첫 실행 시 6개의 샘플 메모가 자동으로 생성됩니다:
-
-- 프로젝트 회의 준비 (업무)
-- React 18 새로운 기능 학습 (학습)
-- 새로운 앱 아이디어: 습관 트래커 (아이디어)
-- 주말 여행 계획 (개인)
-- 독서 목록 (개인)
-- 성능 최적화 아이디어 (아이디어)
-
 ## 🔧 개발 가이드
 
 ### 메모 CRUD 작업
+
+`useMemos` 훅을 통해 컴포넌트에서 메모 데이터를 손쉽게 관리할 수 있습니다. 데이터 로직은 `src/app/actions/memos.ts`에 캡슐화되어 있습니다.
 
 ```typescript
 // useMemos 훅 사용 예시
@@ -153,22 +138,7 @@ const {
   searchMemos, // 검색
   filterByCategory, // 카테고리 필터링
   stats, // 통계 정보
-} = useMemos()
-```
-
-### LocalStorage 직접 조작
-
-```typescript
-import { localStorageUtils } from '@/utils/localStorage'
-
-// 모든 메모 가져오기
-const memos = localStorageUtils.getMemos()
-
-// 메모 추가
-localStorageUtils.addMemo(newMemo)
-
-// 메모 검색
-const results = localStorageUtils.searchMemos('React')
+} = useMemos(profile)
 ```
 
 ## 🚀 배포

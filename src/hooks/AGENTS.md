@@ -95,7 +95,6 @@ export const useCustomHook = (initialValue?: SomeType) => {
 ### Do's
 
 - 훅 이름은 `use` 접두사 필수
-- LocalStorage 접근은 `localStorageUtils` 통해서만
 - 에러 처리: try-catch로 감싸고 console.error 로깅
 - 로딩 상태 항상 제공
 

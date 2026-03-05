@@ -1,6 +1,7 @@
 'use client'
 
 import { Memo, MEMO_CATEGORIES } from '@/types/memo'
+import MemoItem from './MemoItem'
 
 interface MemoListProps {
   memos: Memo[]
@@ -31,18 +32,6 @@ export default function MemoList({
   onDeleteMemo,
   onViewMemo,
 }: MemoListProps) {
-  const getCategoryColor = (category: string) => {
-    const colors: { [key: string]: string } = {
-      todo: 'border-cyan-500',
-      personal: 'border-blue-500',
-      work: 'border-green-500',
-      study: 'border-purple-500',
-      idea: 'border-yellow-500',
-      other: 'border-gray-500',
-    }
-    return colors[category] || colors.other
-  }
-
   const allCategories = ['all', ...Object.keys(MEMO_CATEGORIES)]
 
   return (
@@ -82,40 +71,15 @@ export default function MemoList({
         </div>
       ) : memos.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {memos.map(memo => {
-             const allTodosDone = memo.category === 'todo' && memo.todos && memo.todos.every(t => t.isDone);
-             return (
-                <div
-                  key={memo.id}
-                  className={`bg-white rounded-lg shadow-md overflow-hidden transform hover:-translate-y-1 transition-all duration-300 border-l-4 ${getCategoryColor(memo.category)}`}
-                >
-                  <div className="p-5">
-                    <div className="flex justify-between items-start">
-                      <h3 
-                        className={`text-lg font-bold text-gray-800 mb-2 truncate cursor-pointer hover:text-blue-600 transition-colors ${allTodosDone ? 'line-through text-gray-400' : ''}`}
-                        onClick={() => onViewMemo(memo)}
-                        title={memo.title}
-                      >
-                        {memo.title}
-                      </h3>
-                      <span className="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-700">
-                        {MEMO_CATEGORIES[memo.category]}
-                      </span>
-                    </div>
-                    <p className="text-sm text-gray-600 h-12 overflow-hidden mb-3">
-                      {memo.summary || (memo.category === 'todo' ? `${memo.todos?.length || 0}개의 할 일` : memo.content) }
-                    </p>
-                    <div className="flex items-center justify-between text-xs text-gray-500">
-                      <span>{new Date(memo.updatedAt).toLocaleDateString('ko-KR')}</span>
-                      <div className="flex space-x-2">
-                        <button onClick={() => onEditMemo(memo)} className="text-blue-500 hover:text-blue-700">편집</button>
-                        <button onClick={() => onDeleteMemo(memo.id)} className="text-red-500 hover:text-red-700">삭제</button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-             );
-          })}
+          {memos.map(memo => (
+            <MemoItem 
+              key={memo.id}
+              memo={memo}
+              onEdit={onEditMemo}
+              onDelete={onDeleteMemo}
+              onView={onViewMemo}
+            />
+          ))}
         </div>
       ) : (
         <div className="text-center py-10 bg-white rounded-lg shadow">

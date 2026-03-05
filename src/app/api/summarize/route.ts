@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
 
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash-lite',
-      contents: `다음 메모 내용을 한국어로 3~5문장으로 간결하게 요약해 주세요. 핵심 내용만 포함하고, 마크다운 형식으로 작성해 주세요.\n\n---\n${content}\n---`,
+      contents: `다음 메모 내용을 한국어로 2~3문장으로 간결하게 요약해 주세요. 나열된 항목이면 공통적인 핵심 내용만 포함하고, 진행되는 내용이라면 핵심적인 흐름만 요약해줘. 메모 내용은 마크다운 형식으로 되어 있어.\n\n---\n${content}\n---`,
     })
 
     const summary = response.text

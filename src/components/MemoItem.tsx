@@ -38,6 +38,8 @@ export default function MemoItem({
     return colors[category] || 'bg-gray-100 text-gray-800'
   }
 
+  const allTodosDone = memo.category === 'todo' && memo.todos && memo.todos.length > 0 && memo.todos.every(t => t.isDone);
+
   return (
     <div
       className="bg-white rounded-lg shadow-md border border-gray-200 p-6 hover:shadow-lg transition-shadow duration-200 cursor-pointer flex flex-col justify-between"
@@ -48,7 +50,7 @@ export default function MemoItem({
         {/* 헤더 */}
         <div className="flex justify-between items-start mb-3">
           <div className="flex-1 min-w-0">
-            <h3 className="text-lg font-semibold text-gray-900 mb-2 truncate">
+            <h3 className={`text-lg font-semibold text-gray-900 mb-2 truncate ${allTodosDone ? 'line-through text-gray-400' : ''}`}>
               {memo.title}
             </h3>
             <div className="flex items-center gap-2 flex-wrap">

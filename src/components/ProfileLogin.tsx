@@ -31,6 +31,7 @@ export default function ProfileLogin({ onLogin }: ProfileLoginProps) {
               placeholder="프로필 이름을 입력하세요"
               value={profile}
               onChange={(e) => setProfile(e.target.value)}
+              autoComplete="off"
             />
           </div>
           <div className="flex items-center justify-between">
